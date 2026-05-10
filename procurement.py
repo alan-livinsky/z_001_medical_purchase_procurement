@@ -75,6 +75,8 @@ class MedicalPurchaseProcurementRound(ModelSQL, ModelView):
         ('cancelled', 'Cancelada'),
     ], 'Estado', readonly=True, sort=False)
     date = fields.DateTime('Fecha', readonly=True)
+    date_display = fields.Function(
+        fields.Char('Fecha'), 'get_date_display')
     created_by = fields.Many2One('res.user', 'Creado por', readonly=True)
     observations = fields.Text(
         'Observaciones',
@@ -158,6 +160,15 @@ class MedicalPurchaseProcurementRound(ModelSQL, ModelView):
             else:
                 result[record.id] = None
         return result
+
+    @classmethod
+    def get_date_display(cls, records, name):
+        return {
+            record.id: (
+                record.date.strftime('%Y-%m-%d %H:%M:%S')
+                if record.date else '')
+            for record in records
+        }
 
     @classmethod
     def create(cls, vlist):

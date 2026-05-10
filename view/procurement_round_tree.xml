@@ -7,5 +7,5 @@
     <field name="winner_proposal"/>
     <field name="generated_purchase"/>
     <field name="created_by"/>
-    <field name="date"/>
+    <field name="date_display"/>
 </tree>
