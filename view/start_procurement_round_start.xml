@@ -6,9 +6,8 @@
         <label name="generated_name"/>
         <field name="generated_name"/>
     </group>
-    <field name="party_lines" colspan="4">
-        <tree editable="bottom">
-            <field name="party"/>
-        </tree>
-    </field>
+    <field name="party_lines"
+           colspan="4"
+           mode="tree"
+           view_ids="z_001_medical_purchase_procurement.view_start_procurement_round_party_tree"/>
 </form>
