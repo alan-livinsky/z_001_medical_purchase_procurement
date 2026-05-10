@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<form>
+    <group col="4" colspan="4">
+        <label name="name"/>
+        <field name="name"/>
+        <label name="state"/>
+        <field name="state"/>
+        <label name="audit_document"/>
+        <field name="audit_document"/>
+        <label name="created_by"/>
+        <field name="created_by"/>
+        <label name="date"/>
+        <field name="date"/>
+        <label name="proposal_count"/>
+        <field name="proposal_count"/>
+        <label name="winner_proposal"/>
+        <field name="winner_proposal"/>
+        <label name="generated_purchase"/>
+        <field name="generated_purchase"/>
+        <label name="total_amount"/>
+        <field name="total_amount"/>
+    </group>
+    <label name="observations"/>
+    <field name="observations" colspan="4"/>
+    <field name="proposals"
+           colspan="4"
+           mode="tree,form"
+           view_ids="z_001_medical_purchase_procurement.view_procurement_proposal_tree"/>
+    <group string="Acciones" colspan="4" col="2">
+        <button name="cancel_round" string="Cancelar Ronda" icon="tryton-cancel"/>
+    </group>
+</form>

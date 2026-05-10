@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<tree>
+    <field name="name"/>
+    <field name="audit_document"/>
+    <field name="state"/>
+    <field name="proposal_count"/>
+    <field name="winner_proposal"/>
+    <field name="generated_purchase"/>
+    <field name="created_by"/>
+    <field name="date"/>
+</tree>

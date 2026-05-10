@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<form>
+    <group col="4" colspan="4">
+        <label name="round"/>
+        <field name="round"/>
+        <label name="party"/>
+        <field name="party"/>
+        <label name="state"/>
+        <field name="state"/>
+        <label name="total"/>
+        <field name="total"/>
+        <label name="is_winner"/>
+        <field name="is_winner"/>
+        <label name="purchase"/>
+        <field name="purchase"/>
+    </group>
+    <label name="observations"/>
+    <field name="observations" colspan="4"/>
+    <field name="lines"
+           colspan="4"
+           mode="tree,form"
+           view_ids="z_001_medical_purchase_procurement.view_procurement_proposal_line_tree"/>
+</form>

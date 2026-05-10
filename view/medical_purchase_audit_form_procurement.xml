@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<data>
+    <xpath expr="/form" position="inside">
+        <label name="procurement_round_count"/>
+        <field name="procurement_round_count"/>
+        <field name="procurement_rounds"
+               colspan="4"
+               mode="tree,form"
+               view_ids="z_001_medical_purchase_procurement.view_procurement_round_tree"/>
+    </xpath>
+</data>

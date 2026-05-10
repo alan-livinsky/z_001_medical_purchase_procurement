@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tryton>
+    <data>
+
+        <record model="res.group" id="z_gestor_procura_medica">
+            <field name="name">z_gestor_procura_medica</field>
+        </record>
+
+        <record model="res.group" id="z_auditor_medico_procura_medica">
+            <field name="name">z_auditor_medico_procura_medica</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_procurement_round_tree">
+            <field name="model">gnuhealth.medical.purchase.procurement.round</field>
+            <field name="type">tree</field>
+            <field name="name">procurement_round_tree</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_procurement_round_form">
+            <field name="model">gnuhealth.medical.purchase.procurement.round</field>
+            <field name="type">form</field>
+            <field name="name">procurement_round_form</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_procurement_proposal_tree">
+            <field name="model">gnuhealth.medical.purchase.procurement.proposal</field>
+            <field name="type">tree</field>
+            <field name="name">procurement_proposal_tree</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_procurement_proposal_form">
+            <field name="model">gnuhealth.medical.purchase.procurement.proposal</field>
+            <field name="type">form</field>
+            <field name="name">procurement_proposal_form</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_procurement_proposal_line_tree">
+            <field name="model">gnuhealth.medical.purchase.procurement.proposal.line</field>
+            <field name="type">tree</field>
+            <field name="name">procurement_proposal_line_tree</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_procurement_proposal_line_form">
+            <field name="model">gnuhealth.medical.purchase.procurement.proposal.line</field>
+            <field name="type">form</field>
+            <field name="name">procurement_proposal_line_form</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_start_procurement_round_start">
+            <field name="model">gnuhealth.medical.purchase.procurement.start</field>
+            <field name="type">form</field>
+            <field name="name">start_procurement_round_start</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_select_procurement_winner_start">
+            <field name="model">gnuhealth.medical.purchase.procurement.select_winner</field>
+            <field name="type">form</field>
+            <field name="name">select_procurement_winner_start</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_generate_procurement_purchase_start">
+            <field name="model">gnuhealth.medical.purchase.procurement.generate_purchase</field>
+            <field name="type">form</field>
+            <field name="name">generate_procurement_purchase_start</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_medical_purchase_audit_form_inherit_procurement">
+            <field name="model">gnuhealth.medical.purchase.audit</field>
+            <field name="inherit" ref="z_001_medical_purchases_audit.view_medical_purchase_audit_form"/>
+            <field name="name">medical_purchase_audit_form_procurement</field>
+        </record>
+
+        <record model="ir.action.act_window" id="act_procurement_round">
+            <field name="name">Rondas de Procurement</field>
+            <field name="res_model">gnuhealth.medical.purchase.procurement.round</field>
+        </record>
+
+        <record model="ir.action-res.group" id="act_procurement_round_group_manager">
+            <field name="action" ref="act_procurement_round"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
+        <record model="ir.action-res.group" id="act_procurement_round_group_auditor">
+            <field name="action" ref="act_procurement_round"/>
+            <field name="group" ref="z_auditor_medico_procura_medica"/>
+        </record>
+
+        <record model="ir.action.act_window.view" id="act_procurement_round_tree_view">
+            <field name="sequence" eval="10"/>
+            <field name="view" ref="view_procurement_round_tree"/>
+            <field name="act_window" ref="act_procurement_round"/>
+        </record>
+
+        <record model="ir.action.act_window.view" id="act_procurement_round_form_view">
+            <field name="sequence" eval="20"/>
+            <field name="view" ref="view_procurement_round_form"/>
+            <field name="act_window" ref="act_procurement_round"/>
+        </record>
+
+        <menuitem name="Rondas de Procurement"
+                  parent="z_001_medical_purchases_audit.menu_medical_purchase_audit_root"
+                  id="menu_procurement_round"
+                  sequence="20"
+                  action="act_procurement_round"/>
+
+        <record model="ir.ui.menu-res.group" id="menu_procurement_round_group_manager">
+            <field name="menu" ref="menu_procurement_round"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
+        <record model="ir.ui.menu-res.group" id="menu_procurement_round_group_auditor">
+            <field name="menu" ref="menu_procurement_round"/>
+            <field name="group" ref="z_auditor_medico_procura_medica"/>
+        </record>
+
+        <record model="ir.model.access" id="access_procurement_round_manager">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.round')]"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="True"/>
+        </record>
+
+        <record model="ir.model.access" id="access_procurement_round_auditor">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.round')]"/>
+            <field name="group" ref="z_auditor_medico_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_procurement_proposal_manager">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.proposal')]"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_procurement_proposal_auditor">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.proposal')]"/>
+            <field name="group" ref="z_auditor_medico_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_procurement_line_manager">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.proposal.line')]"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_procurement_line_auditor">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.proposal.line')]"/>
+            <field name="group" ref="z_auditor_medico_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_start_procurement_round_start_manager">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.start')]"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_start_procurement_round_party_manager">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.start.party')]"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="True"/>
+        </record>
+
+        <record model="ir.model.access" id="access_select_procurement_winner_start_manager">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.select_winner')]"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_generate_procurement_purchase_start_manager">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.generate_purchase')]"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_medical_purchase_audit_procurement_manager">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.audit')]"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.action.wizard" id="act_start_procurement_round_wizard">
+            <field name="name">Iniciar Procurement</field>
+            <field name="wiz_name">gnuhealth.medical.purchase.procurement.start_wizard</field>
+        </record>
+
+        <record model="ir.action-res.group" id="act_start_procurement_round_wizard_group_manager">
+            <field name="action" ref="act_start_procurement_round_wizard"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
+        <record model="ir.action.keyword" id="keyword_start_procurement_round">
+            <field name="keyword">form_action</field>
+            <field name="action" ref="act_start_procurement_round_wizard"/>
+            <field name="model">gnuhealth.medical.purchase.audit,-1</field>
+        </record>
+
+        <record model="ir.action.wizard" id="act_select_procurement_winner_wizard">
+            <field name="name">Seleccionar Ganador</field>
+            <field name="wiz_name">gnuhealth.medical.purchase.procurement.select_winner_wizard</field>
+        </record>
+
+        <record model="ir.action-res.group" id="act_select_procurement_winner_wizard_group_manager">
+            <field name="action" ref="act_select_procurement_winner_wizard"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
+        <record model="ir.action.keyword" id="keyword_select_procurement_winner">
+            <field name="keyword">form_action</field>
+            <field name="action" ref="act_select_procurement_winner_wizard"/>
+            <field name="model">gnuhealth.medical.purchase.procurement.round,-1</field>
+        </record>
+
+        <record model="ir.action.wizard" id="act_generate_procurement_purchase_wizard">
+            <field name="name">Generar Compra</field>
+            <field name="wiz_name">gnuhealth.medical.purchase.procurement.generate_purchase_wizard</field>
+        </record>
+
+        <record model="ir.action-res.group" id="act_generate_procurement_purchase_wizard_group_manager">
+            <field name="action" ref="act_generate_procurement_purchase_wizard"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
+        <record model="ir.action.keyword" id="keyword_generate_procurement_purchase">
+            <field name="keyword">form_action</field>
+            <field name="action" ref="act_generate_procurement_purchase_wizard"/>
+            <field name="model">gnuhealth.medical.purchase.procurement.round,-1</field>
+        </record>
+
+        <record model="ir.model.button" id="button_cancel_procurement_round">
+            <field name="name">cancel_round</field>
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.round')]"/>
+        </record>
+
+        <record model="ir.model.button.rule" id="rule_cancel_procurement_round">
+            <field name="button" ref="button_cancel_procurement_round"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
+    </data>
+</tryton>
