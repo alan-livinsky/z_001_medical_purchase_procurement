@@ -58,6 +58,12 @@
             <field name="name">start_procurement_round_party_tree</field>
         </record>
 
+        <record model="ir.ui.view" id="view_start_procurement_round_party_form">
+            <field name="model">gnuhealth.medical.purchase.procurement.start.party</field>
+            <field name="type">form</field>
+            <field name="name">start_procurement_round_party_form</field>
+        </record>
+
         <record model="ir.ui.view" id="view_select_procurement_winner_start">
             <field name="model">gnuhealth.medical.purchase.procurement.select_winner</field>
             <field name="type">form</field>

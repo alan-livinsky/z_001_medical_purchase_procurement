@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<form>
+    <group id="main" col="2">
+        <label name="party"/>
+        <field name="party"/>
+    </group>
+</form>
