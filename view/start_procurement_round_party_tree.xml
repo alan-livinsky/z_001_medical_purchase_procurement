@@ -1,4 +1,4 @@
 <?xml version="1.0"?>
-<tree editable="bottom">
+<tree>
     <field name="party"/>
 </tree>
