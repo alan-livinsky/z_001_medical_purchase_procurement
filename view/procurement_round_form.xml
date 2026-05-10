@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <form>
-    <group col="4" colspan="4">
+    <group id="main" col="4" colspan="4">
         <label name="name"/>
         <field name="name"/>
         <label name="state"/>
@@ -26,7 +26,7 @@
            colspan="4"
            mode="tree,form"
            view_ids="z_001_medical_purchase_procurement.view_procurement_proposal_tree"/>
-    <group string="Acciones" colspan="4" col="2">
+    <group id="actions" string="Acciones" colspan="4" col="2">
         <button name="cancel_round" string="Cancelar Ronda" icon="tryton-cancel"/>
     </group>
 </form>
