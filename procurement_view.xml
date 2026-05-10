@@ -103,6 +103,16 @@
                   sequence="20"
                   action="act_procurement_round"/>
 
+        <record model="ir.ui.menu-res.group" id="menu_medical_purchase_audit_root_group_procurement_manager">
+            <field name="menu" ref="z_001_medical_purchases_audit.menu_medical_purchase_audit_root"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
+        <record model="ir.ui.menu-res.group" id="menu_medical_purchase_audit_root_group_procurement_auditor">
+            <field name="menu" ref="z_001_medical_purchases_audit.menu_medical_purchase_audit_root"/>
+            <field name="group" ref="z_auditor_medico_procura_medica"/>
+        </record>
+
         <record model="ir.ui.menu-res.group" id="menu_procurement_round_group_manager">
             <field name="menu" ref="menu_procurement_round"/>
             <field name="group" ref="z_gestor_procura_medica"/>

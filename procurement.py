@@ -391,9 +391,10 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
 
     round = fields.Many2One(
         'gnuhealth.medical.purchase.procurement.round', 'Ronda',
-        required=True, ondelete='CASCADE')
+        required=True, readonly=True, ondelete='CASCADE')
     party = fields.Many2One(
-        'party.party', 'Proveedor', required=True, ondelete='RESTRICT')
+        'party.party', 'Proveedor', required=True, readonly=True,
+        ondelete='RESTRICT')
     state = fields.Selection([
         ('draft', 'Borrador'),
         ('winner', 'Ganadora'),
@@ -494,7 +495,7 @@ class MedicalPurchaseProcurementProposalLine(ModelSQL, ModelView):
 
     proposal = fields.Many2One(
         'gnuhealth.medical.purchase.procurement.proposal', 'Propuesta',
-        required=True, ondelete='CASCADE')
+        required=True, readonly=True, ondelete='CASCADE')
     medicament = fields.Many2One(
         'gnuhealth.medicament', 'Medicamento',
         required=True, readonly=True, ondelete='RESTRICT')
