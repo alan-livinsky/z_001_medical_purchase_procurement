@@ -4,6 +4,8 @@
     <field name="audit_document"/>
     <field name="state"/>
     <field name="proposal_count"/>
+    <field name="request_generated_count"/>
+    <field name="response_received_count"/>
     <field name="winner_proposal"/>
     <field name="generated_purchase"/>
     <field name="created_by"/>

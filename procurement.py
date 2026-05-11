@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from datetime import datetime
-from decimal import Decimal
 
 from trytond.exceptions import UserError
 from trytond.model import ModelSQL, ModelView, Unique, fields
 from trytond.pool import Pool, PoolMeta
-from trytond.pyson import Bool, Eval, Not
+from trytond.pyson import Eval
+from trytond.report import Report
 from trytond.transaction import Transaction
 from trytond.wizard import Button, StateTransition, StateView, Wizard
 
@@ -15,7 +15,7 @@ __all__ = [
     'MedicalPurchaseAudit',
     'MedicalPurchaseProcurementRound',
     'MedicalPurchaseProcurementProposal',
-    'MedicalPurchaseProcurementProposalLine',
+    'MedicalPurchaseProcurementProposalBudgetRequestReport',
     'StartProcurementRoundStart',
     'StartProcurementRoundParty',
     'StartProcurementRoundWizard',
@@ -25,7 +25,6 @@ __all__ = [
     'GenerateProcurementPurchaseWizard',
 ]
 
-ZERO = Decimal('0.00')
 ACTIVE_ROUND_STATES = [
     'draft', 'in_comparison', 'winner_selected', 'purchase_created']
 
@@ -98,8 +97,11 @@ class MedicalPurchaseProcurementRound(ModelSQL, ModelView):
     proposal_count = fields.Function(
         fields.Integer('Cantidad de Propuestas'),
         'get_round_metrics')
-    total_amount = fields.Function(
-        fields.Numeric('Total Ganador', digits=(16, 2)),
+    request_generated_count = fields.Function(
+        fields.Integer('Solicitudes Generadas'),
+        'get_round_metrics')
+    response_received_count = fields.Function(
+        fields.Integer('Respuestas Recibidas'),
         'get_round_metrics')
 
     @classmethod
@@ -153,10 +155,14 @@ class MedicalPurchaseProcurementRound(ModelSQL, ModelView):
         for record in records:
             if name == 'proposal_count':
                 result[record.id] = len(record.proposals)
-            elif name == 'total_amount':
-                result[record.id] = (
-                    record.winner_proposal.total
-                    if record.winner_proposal else ZERO)
+            elif name == 'request_generated_count':
+                result[record.id] = sum(
+                    1 for proposal in record.proposals
+                    if proposal.request_generated)
+            elif name == 'response_received_count':
+                result[record.id] = sum(
+                    1 for proposal in record.proposals
+                    if proposal.has_response_file)
             else:
                 result[record.id] = None
         return result
@@ -203,8 +209,7 @@ class MedicalPurchaseProcurementRound(ModelSQL, ModelView):
             for record in records:
                 if (record.state in ('done', 'cancelled')
                         and changed - {'observations'}):
-                    raise UserError(
-                        'La ronda ya no se puede modificar.')
+                    raise UserError('La ronda ya no se puede modificar.')
                 if (changed - {'observations'}) and not system_change:
                     raise UserError(
                         'La ronda solo puede cambiar mediante las acciones '
@@ -233,6 +238,9 @@ class MedicalPurchaseProcurementRound(ModelSQL, ModelView):
             raise UserError(
                 'Solo se puede iniciar procurement desde documentos '
                 'aceptados.')
+        if not audit.lines:
+            raise UserError(
+                'El documento aceptado no tiene medicamentos para cotizar.')
 
     @classmethod
     def _validate_no_active_round(cls, audit):
@@ -288,9 +296,8 @@ class MedicalPurchaseProcurementRound(ModelSQL, ModelView):
                 'compra.')
 
     def _build_purchase_description(self):
-        return (
-            'Origen: %s | Ronda: %s'
-            % (self.audit_document.rec_name, self.rec_name))
+        return 'Origen: %s | Ronda: %s' % (
+            self.audit_document.rec_name, self.rec_name)
 
     def _get_company(self):
         Company = Pool().get('company.company')
@@ -311,6 +318,34 @@ class MedicalPurchaseProcurementRound(ModelSQL, ModelView):
                 'No se pudo resolver un deposito para la compra. '
                 'Seleccione uno en el wizard.')
         return warehouse
+
+    def _iter_purchase_source_lines(self):
+        for audit_line in self.audit_document.lines:
+            if not audit_line.medicament:
+                raise UserError(
+                    'El documento aceptado contiene una linea sin '
+                    'medicamento.')
+            product = audit_line.medicament.name
+            if not product:
+                raise UserError(
+                    'El medicamento "%s" no tiene un producto asociado.'
+                    % audit_line.medicament.rec_name)
+            if not product.purchasable:
+                raise UserError(
+                    'El producto "%s" no esta habilitado para compras.'
+                    % product.rec_name)
+            if audit_line.unit_price is None:
+                raise UserError(
+                    'El documento aceptado debe tener precio unitario para '
+                    'todos los medicamentos.')
+            quantity = audit_line.purchase_quantity or 0
+            if quantity < 0:
+                raise UserError(
+                    'La cantidad a comprar del documento aceptado no puede '
+                    'ser menor que cero.')
+            if quantity == 0:
+                continue
+            yield audit_line, product
 
     def generate_purchase(self, warehouse=None):
         pool = Pool()
@@ -348,21 +383,27 @@ class MedicalPurchaseProcurementRound(ModelSQL, ModelView):
         purchase.save()
 
         lines = []
-        for proposal_line in proposal.lines:
-            proposal_line.validate_for_winner()
+        for audit_line, product in self._iter_purchase_source_lines():
             line = PurchaseLine()
             line.purchase = purchase
             line.type = 'line'
-            line.product = proposal_line.product
-            line.quantity = float(proposal_line.quantity)
+            line.product = product
+            line.quantity = float(audit_line.purchase_quantity)
             line.on_change_product()
-            line.unit_price = proposal_line.unit_price
-            line.description = proposal_line.get_purchase_line_description()
+            line.unit_price = audit_line.unit_price
+            line.description = '%s - Documento %s' % (
+                audit_line.medicament.rec_name,
+                self.audit_document.rec_name)
             if not line.unit:
                 raise UserError(
                     'El producto "%s" no tiene unidad de compra valida.'
-                    % proposal_line.product.rec_name)
+                    % product.rec_name)
             lines.append(line)
+
+        if not lines:
+            raise UserError(
+                'El documento aceptado no tiene cantidades a comprar '
+                'mayores a cero.')
         PurchaseLine.save(lines)
 
         try:
@@ -390,8 +431,6 @@ class MedicalPurchaseProcurementRound(ModelSQL, ModelView):
             if round_.generated_purchase:
                 raise UserError(
                     'No se puede cancelar una ronda que ya genero una compra.')
-            if round_.state == 'cancelled':
-                continue
         with Transaction().set_context(from_procurement_round_workflow=True):
             cls.write(rounds, {'state': 'cancelled'})
 
@@ -411,8 +450,28 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
         ('winner', 'Ganadora'),
         ('discarded', 'No Ganadora'),
     ], 'Estado', readonly=True, sort=False)
-    total = fields.Function(
-        fields.Numeric('Total', digits=(16, 2)), 'get_total')
+    request_generated = fields.Boolean(
+        'Solicitud Generada', readonly=True)
+    request_generated_date = fields.DateTime(
+        'Fecha Solicitud', readonly=True)
+    request_generated_by = fields.Many2One(
+        'res.user', 'Solicitud Generada Por', readonly=True)
+    response_file = fields.Binary(
+        'Archivo de Respuesta',
+        filename='response_filename',
+        states={'readonly': Eval('round_state') != 'in_comparison'},
+        depends=['round_state'])
+    response_filename = fields.Char(
+        'Nombre de Archivo',
+        states={'readonly': Eval('round_state') != 'in_comparison'},
+        depends=['round_state'])
+    response_received_date = fields.DateTime(
+        'Fecha Respuesta', readonly=True)
+    response_received_by = fields.Many2One(
+        'res.user', 'Respuesta Cargada Por', readonly=True)
+    has_response_file = fields.Function(
+        fields.Boolean('Tiene Respuesta'),
+        'get_has_response_file')
     observations = fields.Text(
         'Observaciones',
         states={'readonly': Eval('round_state') != 'in_comparison'},
@@ -420,11 +479,6 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
     is_winner = fields.Boolean('Ganadora', readonly=True)
     purchase = fields.Many2One(
         'purchase.purchase', 'Compra Vinculada', readonly=True)
-    lines = fields.One2Many(
-        'gnuhealth.medical.purchase.procurement.proposal.line', 'proposal',
-        'Lineas',
-        states={'readonly': Eval('round_state') != 'in_comparison'},
-        depends=['round_state'])
     round_state = fields.Function(
         fields.Selection([
             ('draft', 'Borrador'),
@@ -457,11 +511,9 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
         }
 
     @classmethod
-    def get_total(cls, records, name):
+    def get_has_response_file(cls, records, name):
         return {
-            record.id: sum(
-                (line.subtotal or ZERO) for line in record.lines
-            ) if record.lines else ZERO
+            record.id: bool(record.response_file)
             for record in records
         }
 
@@ -478,167 +530,118 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
         actions = iter(args)
         system_change = Transaction().context.get(
             'from_procurement_round_workflow')
+        request_report_change = Transaction().context.get(
+            'from_procurement_request_report')
         for records, values in zip(actions, actions):
+            values = dict(values)
             changed = set(values.keys())
+            editable_fields = {
+                'observations', 'response_file', 'response_filename',
+            }
+            response_tracking_fields = {
+                'response_received_date', 'response_received_by',
+            }
+            workflow_fields = {
+                'is_winner', 'state', 'purchase',
+            }
+            request_fields = {
+                'request_generated', 'request_generated_date',
+                'request_generated_by',
+            }
+            if 'response_file' in values:
+                if values.get('response_file'):
+                    values['response_received_date'] = datetime.utcnow()
+                    values['response_received_by'] = Transaction().user
+                else:
+                    values['response_filename'] = None
+                    values['response_received_date'] = None
+                    values['response_received_by'] = None
+                changed = set(values.keys())
+
             for record in records:
-                if record.round.state != 'in_comparison' and changed - {
-                        'is_winner', 'state', 'purchase'}:
-                    raise UserError(
-                        'La propuesta ya no se puede editar fuera de la '
-                        'etapa de comparacion.')
-                if changed & {'is_winner', 'state', 'purchase'} and not system_change:
+                if record.round.state != 'in_comparison':
+                    if changed - workflow_fields - request_fields:
+                        raise UserError(
+                            'La propuesta ya no se puede editar fuera de la '
+                            'etapa de comparacion.')
+                if changed & workflow_fields and not system_change:
                     raise UserError(
                         'La propuesta solo puede cambiar de estado desde las '
                         'acciones autorizadas.')
-        super().write(*args)
+                if changed & request_fields and not request_report_change:
+                    raise UserError(
+                        'La solicitud de presupuesto solo se puede marcar '
+                        'desde el reporte autorizado.')
+                if changed - editable_fields - response_tracking_fields - workflow_fields - request_fields:
+                    raise UserError(
+                        'La propuesta contiene cambios no permitidos por el '
+                        'flujo.')
+            super().write(records, values)
 
     def validate_as_winner(self):
-        if not self.lines:
+        if not self.response_file:
             raise UserError(
-                'La propuesta seleccionada no tiene lineas.')
-        for line in self.lines:
-            line.validate_for_winner()
-
-
-class MedicalPurchaseProcurementProposalLine(ModelSQL, ModelView):
-    'Medical Purchase Procurement Proposal Line'
-    __name__ = 'gnuhealth.medical.purchase.procurement.proposal.line'
-
-    proposal = fields.Many2One(
-        'gnuhealth.medical.purchase.procurement.proposal', 'Propuesta',
-        required=True, readonly=True, ondelete='CASCADE')
-    medicament = fields.Many2One(
-        'gnuhealth.medicament', 'Medicamento',
-        required=True, readonly=True, ondelete='RESTRICT')
-    product = fields.Many2One(
-        'product.product', 'Producto',
-        required=True, readonly=True, ondelete='RESTRICT')
-    quantity = fields.Integer(
-        'Cantidad',
-        states={'readonly': Eval('proposal_round_state') != 'in_comparison'},
-        depends=['proposal_round_state'])
-    unit_price = fields.Numeric(
-        'Precio Unitario', digits=(16, 2),
-        states={'readonly': Eval('proposal_round_state') != 'in_comparison'},
-        depends=['proposal_round_state'])
-    subtotal = fields.Function(
-        fields.Numeric('Subtotal', digits=(16, 2)),
-        'get_subtotal')
-    observations = fields.Text(
-        'Observaciones',
-        states={'readonly': Eval('proposal_round_state') != 'in_comparison'},
-        depends=['proposal_round_state'])
-    proposal_round_state = fields.Function(
-        fields.Selection([
-            ('draft', 'Borrador'),
-            ('in_comparison', 'En Comparacion'),
-            ('winner_selected', 'Ganador Seleccionado'),
-            ('purchase_created', 'Compra Generada'),
-            ('done', 'Finalizada'),
-            ('cancelled', 'Cancelada'),
-        ], 'Estado Ronda'),
-        'get_proposal_round_state')
+                'Debe cargar la respuesta del proveedor antes de seleccionar '
+                'un ganador.')
 
     @classmethod
-    def get_proposal_round_state(cls, records, name):
-        return {
-            record.id: (
-                record.proposal.round.state
-                if record.proposal and record.proposal.round else None)
-            for record in records
-        }
+    def mark_request_generated(cls, proposals):
+        with Transaction().set_context(from_procurement_request_report=True):
+            cls.write(proposals, {
+                'request_generated': True,
+                'request_generated_date': datetime.utcnow(),
+                'request_generated_by': Transaction().user,
+            })
 
-    def _calculate_subtotal(self):
-        quantity = Decimal(str(self.quantity or 0))
-        price = self.unit_price if self.unit_price is not None else ZERO
-        return price * quantity
+    def get_rec_name(self, name):
+        if self.party:
+            return self.party.rec_name
+        return super().get_rec_name(name)
 
-    @classmethod
-    def get_subtotal(cls, records, name):
-        return {
-            record.id: record._calculate_subtotal()
-            for record in records
-        }
 
-    @fields.depends('quantity', 'unit_price')
-    def on_change_with_subtotal(self, name=None):
-        return self._calculate_subtotal()
+class MedicalPurchaseProcurementProposalBudgetRequestReport(Report):
+    __name__ = 'z_001_medical_purchase_procurement.procurement_budget_request'
 
     @classmethod
-    def create(cls, vlist):
-        if not Transaction().context.get('from_procurement_start_wizard'):
+    def execute(cls, ids, data):
+        Proposal = Pool().get('gnuhealth.medical.purchase.procurement.proposal')
+        proposals = Proposal.browse(ids)
+        if not proposals:
             raise UserError(
-                'Las lineas de propuesta solo se pueden crear desde el '
-                'wizard de inicio de ronda.')
-        cls._validate_values(vlist)
-        return super().create(vlist)
+                'No se encontraron propuestas para generar la solicitud de '
+                'presupuesto.')
+        Proposal.mark_request_generated(proposals)
+        content = cls._build_report_content(proposals)
+        filename = 'solicitud_presupuesto'
+        if len(proposals) == 1 and proposals[0].party:
+            filename = 'solicitud_presupuesto_%s' % proposals[0].party.id
+        return 'txt', content.encode('utf-8'), False, filename
 
     @classmethod
-    def write(cls, *args):
-        actions = iter(args)
-        for records, values in zip(actions, actions):
-            cls._validate_values([values], records=records)
-            for record in records:
-                if record.proposal.round.state != 'in_comparison':
-                    raise UserError(
-                        'Las lineas solo se pueden editar durante la '
-                        'comparacion.')
-        super().write(*args)
-
-    @classmethod
-    def delete(cls, records):
-        raise UserError(
-            'Las lineas de propuesta no se pueden eliminar desde la interfaz.')
-
-    @classmethod
-    def validate(cls, records):
-        super().validate(records)
-        cls._validate_values([{
-            'quantity': record.quantity,
-            'unit_price': record.unit_price,
-        } for record in records])
-
-    @classmethod
-    def _validate_values(cls, vlist, records=None):
-        if records:
-            for record in records:
-                quantity = vlist[0].get('quantity', record.quantity)
-                unit_price = vlist[0].get('unit_price', record.unit_price)
-                if quantity is not None and quantity < 0:
-                    raise UserError(
-                        'La cantidad cotizada no puede ser menor que cero.')
-                if unit_price is not None and unit_price < ZERO:
-                    raise UserError(
-                        'El precio unitario no puede ser menor que cero.')
-            return
-        for values in vlist:
-            quantity = values.get('quantity')
-            unit_price = values.get('unit_price')
-            if quantity is not None and quantity < 0:
-                raise UserError(
-                    'La cantidad cotizada no puede ser menor que cero.')
-            if unit_price is not None and unit_price < ZERO:
-                raise UserError(
-                    'El precio unitario no puede ser menor que cero.')
-
-    def validate_for_winner(self):
-        if self.quantity is None or self.quantity < 0:
-            raise UserError(
-                'La propuesta ganadora tiene cantidades invalidas.')
-        if self.unit_price is None:
-            raise UserError(
-                'La propuesta ganadora debe tener todos los precios cargados.')
-        if self.unit_price < ZERO:
-            raise UserError(
-                'La propuesta ganadora tiene precios negativos.')
-        if not self.product.purchasable:
-            raise UserError(
-                'El producto "%s" no esta habilitado para compras.'
-                % self.product.rec_name)
-
-    def get_purchase_line_description(self):
-        return '%s - Documento %s' % (
-            self.medicament.rec_name, self.proposal.round.audit_document.rec_name)
+    def _build_report_content(cls, proposals):
+        blocks = []
+        for proposal in proposals:
+            round_ = proposal.round
+            audit = round_.audit_document
+            lines = [
+                'Solicitud de Presupuesto',
+                '========================',
+                'Proveedor: %s' % proposal.party.rec_name,
+                'Ronda: %s' % round_.rec_name,
+                'Documento origen: %s' % audit.rec_name,
+                'Fecha: %s' % datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                '',
+                'Detalle solicitado:',
+            ]
+            for audit_line in audit.lines:
+                if not audit_line.medicament:
+                    continue
+                lines.append(
+                    '- %s | Cantidad: %s'
+                    % (audit_line.medicament.rec_name,
+                       audit_line.purchase_quantity or 0))
+            blocks.append('\n'.join(lines))
+        return '\n\n'.join(blocks)
 
 
 class StartProcurementRoundStart(ModelView):
@@ -718,30 +721,7 @@ class StartProcurementRoundWizard(Wizard):
             raise UserError(
                 'Debe seleccionar al menos un proveedor.')
 
-        proposal_values = []
-        for party in parties:
-            line_values = []
-            for audit_line in audit.lines:
-                if not audit_line.medicament:
-                    raise UserError(
-                        'El documento aceptado contiene una linea sin '
-                        'medicamento.')
-                product = audit_line.medicament.name
-                if not product:
-                    raise UserError(
-                        'El medicamento "%s" no tiene un producto asociado.'
-                        % audit_line.medicament.rec_name)
-                line_values.append({
-                    'medicament': audit_line.medicament.id,
-                    'product': product.id,
-                    'quantity': audit_line.purchase_quantity,
-                    'observations': None,
-                })
-            proposal_values.append({
-                'party': party.id,
-                'lines': [('create', line_values)],
-            })
-
+        proposal_values = [{'party': party.id} for party in parties]
         with Transaction().set_context(from_procurement_start_wizard=True):
             Round.create([{
                 'audit_document': audit.id,

@@ -2,7 +2,10 @@
 <tree>
     <field name="party"/>
     <field name="state"/>
-    <field name="total"/>
+    <field name="request_generated"/>
+    <field name="request_generated_date"/>
+    <field name="has_response_file"/>
+    <field name="response_received_date"/>
     <field name="is_winner"/>
     <field name="purchase"/>
 </tree>

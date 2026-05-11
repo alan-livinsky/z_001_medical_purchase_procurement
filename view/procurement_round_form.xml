@@ -13,19 +13,21 @@
         <field name="date"/>
         <label name="proposal_count"/>
         <field name="proposal_count"/>
+        <label name="request_generated_count"/>
+        <field name="request_generated_count"/>
+        <label name="response_received_count"/>
+        <field name="response_received_count"/>
         <label name="winner_proposal"/>
         <field name="winner_proposal"/>
         <label name="generated_purchase"/>
         <field name="generated_purchase"/>
-        <label name="total_amount"/>
-        <field name="total_amount"/>
     </group>
     <label name="observations"/>
     <field name="observations" colspan="4"/>
     <field name="proposals"
            colspan="4"
            mode="tree,form"
-           view_ids="z_001_medical_purchase_procurement.view_procurement_proposal_tree"/>
+           view_ids="z_001_medical_purchase_procurement.view_procurement_proposal_tree,z_001_medical_purchase_procurement.view_procurement_proposal_form"/>
     <group id="actions" string="Acciones" colspan="4" col="2">
         <button name="cancel_round" string="Cancelar Ronda" icon="tryton-cancel"/>
     </group>

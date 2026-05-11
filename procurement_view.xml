@@ -34,18 +34,6 @@
             <field name="name">procurement_proposal_form</field>
         </record>
 
-        <record model="ir.ui.view" id="view_procurement_proposal_line_tree">
-            <field name="model">gnuhealth.medical.purchase.procurement.proposal.line</field>
-            <field name="type">tree</field>
-            <field name="name">procurement_proposal_line_tree</field>
-        </record>
-
-        <record model="ir.ui.view" id="view_procurement_proposal_line_form">
-            <field name="model">gnuhealth.medical.purchase.procurement.proposal.line</field>
-            <field name="type">form</field>
-            <field name="name">procurement_proposal_line_form</field>
-        </record>
-
         <record model="ir.ui.view" id="view_start_procurement_round_start">
             <field name="model">gnuhealth.medical.purchase.procurement.start</field>
             <field name="type">form</field>
@@ -171,24 +159,6 @@
             <field name="perm_delete" eval="False"/>
         </record>
 
-        <record model="ir.model.access" id="access_procurement_line_manager">
-            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.proposal.line')]"/>
-            <field name="group" ref="z_gestor_procura_medica"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
-            <field name="perm_delete" eval="False"/>
-        </record>
-
-        <record model="ir.model.access" id="access_procurement_line_auditor">
-            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.proposal.line')]"/>
-            <field name="group" ref="z_auditor_medico_procura_medica"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="False"/>
-            <field name="perm_create" eval="False"/>
-            <field name="perm_delete" eval="False"/>
-        </record>
-
         <record model="ir.model.access" id="access_start_procurement_round_start_manager">
             <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.start')]"/>
             <field name="group" ref="z_gestor_procura_medica"/>
@@ -280,6 +250,25 @@
             <field name="keyword">form_action</field>
             <field name="action" ref="act_generate_procurement_purchase_wizard"/>
             <field name="model">gnuhealth.medical.purchase.procurement.round,-1</field>
+        </record>
+
+        <record model="ir.action.report" id="report_procurement_budget_request">
+            <field name="name">Generar Solicitud de Presupuesto</field>
+            <field name="report_name">z_001_medical_purchase_procurement.procurement_budget_request</field>
+            <field name="model">gnuhealth.medical.purchase.procurement.proposal</field>
+            <field name="report">z_001_medical_purchase_procurement/report.txt</field>
+            <field name="template_extension">txt</field>
+        </record>
+
+        <record model="ir.action-res.group" id="report_procurement_budget_request_group_manager">
+            <field name="action" ref="report_procurement_budget_request"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
+        <record model="ir.action.keyword" id="keyword_procurement_budget_request">
+            <field name="keyword">form_action</field>
+            <field name="action" ref="report_procurement_budget_request"/>
+            <field name="model">gnuhealth.medical.purchase.procurement.proposal,-1</field>
         </record>
 
         <record model="ir.model.button" id="button_cancel_procurement_round">

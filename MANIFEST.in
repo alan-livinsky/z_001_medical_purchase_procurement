@@ -1,0 +1,4 @@
+include *.xml
+include *.cfg
+include *.txt
+recursive-include view *.xml

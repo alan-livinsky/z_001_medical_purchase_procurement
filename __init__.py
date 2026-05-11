@@ -8,7 +8,6 @@ def register():
         procurement.MedicalPurchaseAudit,
         procurement.MedicalPurchaseProcurementRound,
         procurement.MedicalPurchaseProcurementProposal,
-        procurement.MedicalPurchaseProcurementProposalLine,
         procurement.StartProcurementRoundStart,
         procurement.StartProcurementRoundParty,
         procurement.SelectProcurementWinnerStart,
@@ -19,3 +18,6 @@ def register():
         procurement.SelectProcurementWinnerWizard,
         procurement.GenerateProcurementPurchaseWizard,
         module='z_001_medical_purchase_procurement', type_='wizard')
+    Pool.register(
+        procurement.MedicalPurchaseProcurementProposalBudgetRequestReport,
+        module='z_001_medical_purchase_procurement', type_='report')

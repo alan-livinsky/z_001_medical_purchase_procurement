@@ -7,17 +7,29 @@
         <field name="party"/>
         <label name="state"/>
         <field name="state"/>
-        <label name="total"/>
-        <field name="total"/>
+        <label name="request_generated"/>
+        <field name="request_generated"/>
+        <label name="request_generated_date"/>
+        <field name="request_generated_date"/>
+        <label name="request_generated_by"/>
+        <field name="request_generated_by"/>
+        <label name="has_response_file"/>
+        <field name="has_response_file"/>
+        <label name="response_received_date"/>
+        <field name="response_received_date"/>
+        <label name="response_received_by"/>
+        <field name="response_received_by"/>
         <label name="is_winner"/>
         <field name="is_winner"/>
         <label name="purchase"/>
         <field name="purchase"/>
     </group>
+    <group id="response" col="4" colspan="4">
+        <label name="response_filename"/>
+        <field name="response_filename"/>
+        <label name="response_file"/>
+        <field name="response_file"/>
+    </group>
     <label name="observations"/>
     <field name="observations" colspan="4"/>
-    <field name="lines"
-           colspan="4"
-           mode="tree,form"
-           view_ids="z_001_medical_purchase_procurement.view_procurement_proposal_line_tree"/>
 </form>
