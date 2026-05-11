@@ -582,6 +582,8 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
             }
             if 'response_file' in values:
                 if values.get('response_file'):
+                    values['response_file'] = fields.Binary.cast(
+                        values['response_file'])
                     values['response_received_date'] = datetime.utcnow()
                     values['response_received_by'] = Transaction().user
                 else:
@@ -772,7 +774,7 @@ class UploadProcurementResponseWizard(Wizard):
         proposal = Proposal(active_id)
         Proposal.write([proposal], {
             'response_filename': self.start.response_filename,
-            'response_file': self.start.response_file,
+            'response_file': fields.Binary.cast(self.start.response_file),
         })
         return 'end'
 
