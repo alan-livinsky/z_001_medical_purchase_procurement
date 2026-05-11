@@ -10,5 +10,6 @@
     <field name="purchase"/>
     <button name="generate_budget_request" string="Generar Solicitud"/>
     <button name="load_response" string="Cargar Respuesta"/>
+    <button name="download_response" string="Descargar Respuesta"/>
     <button name="mark_as_winner" string="Marcar Ganadora"/>
 </tree>

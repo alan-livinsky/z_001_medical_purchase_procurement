@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<form>
+    <group id="main" col="4" colspan="4">
+        <label name="proposal"/>
+        <field name="proposal"/>
+        <label name="party"/>
+        <field name="party"/>
+        <label name="response_filename"/>
+        <field name="response_filename"/>
+        <label name="response_file"/>
+        <field name="response_file"/>
+    </group>
+</form>

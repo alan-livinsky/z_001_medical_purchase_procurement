@@ -17,9 +17,11 @@ __all__ = [
     'MedicalPurchaseProcurementProposal',
     'MedicalPurchaseProcurementProposalBudgetRequestReport',
     'UploadProcurementResponseStart',
+    'DownloadProcurementResponseResult',
     'StartProcurementRoundStart',
     'StartProcurementRoundParty',
     'UploadProcurementResponseWizard',
+    'DownloadProcurementResponseWizard',
     'StartProcurementRoundWizard',
     'SelectProcurementWinnerStart',
     'SelectProcurementWinnerWizard',
@@ -515,6 +517,10 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
                 'invisible': Eval('round_state') != 'in_comparison',
                 'depends': ['round_state'],
             },
+            'download_response': {
+                'invisible': ~Eval('has_response_file', False),
+                'depends': ['has_response_file'],
+            },
             'mark_as_winner': {
                 'invisible': Eval('round_state') != 'in_comparison',
                 'depends': ['round_state'],
@@ -564,6 +570,7 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
             'from_procurement_round_workflow')
         request_report_change = Transaction().context.get(
             'from_procurement_request_report')
+        processed_args = []
         for records, values in zip(actions, actions):
             values = dict(values)
             changed = set(values.keys())
@@ -610,7 +617,8 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
                     raise UserError(
                         'La propuesta contiene cambios no permitidos por el '
                         'flujo.')
-            super().write(records, values)
+            processed_args.extend([records, values])
+        super().write(*processed_args)
 
     def validate_as_winner(self):
         if not self.response_file:
@@ -643,6 +651,12 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
     @ModelView.button_action(
         'z_001_medical_purchase_procurement.act_upload_procurement_response_wizard')
     def load_response(cls, proposals):
+        cls._ensure_manager_for_buttons()
+
+    @classmethod
+    @ModelView.button_action(
+        'z_001_medical_purchase_procurement.act_download_procurement_response_wizard')
+    def download_response(cls, proposals):
         cls._ensure_manager_for_buttons()
 
     @classmethod
@@ -780,6 +794,48 @@ class UploadProcurementResponseWizard(Wizard):
 
     def end(self):
         return 'reload'
+
+
+class DownloadProcurementResponseResult(ModelView):
+    'Download Procurement Response Result'
+    __name__ = 'gnuhealth.medical.purchase.procurement.download_response.result'
+
+    proposal = fields.Many2One(
+        'gnuhealth.medical.purchase.procurement.proposal', 'Propuesta',
+        readonly=True)
+    party = fields.Many2One('party.party', 'Proveedor', readonly=True)
+    response_filename = fields.Char('Nombre de Archivo', readonly=True)
+    response_file = fields.Binary(
+        'Archivo de Respuesta', filename='response_filename', readonly=True)
+
+
+class DownloadProcurementResponseWizard(Wizard):
+    'Download Procurement Response'
+    __name__ = 'gnuhealth.medical.purchase.procurement.download_response_wizard'
+
+    start_state = 'result'
+    result = StateView(
+        'gnuhealth.medical.purchase.procurement.download_response.result',
+        'z_001_medical_purchase_procurement.'
+        'view_download_procurement_response_result',
+        [Button('Cerrar', 'end', 'tryton-ok', default=True)])
+
+    def default_result(self, fields_names):
+        Proposal = Pool().get('gnuhealth.medical.purchase.procurement.proposal')
+        Proposal._ensure_manager_for_buttons()
+        active_id = Transaction().context.get('active_id')
+        if not active_id:
+            raise UserError('No se encontro la propuesta a consultar.')
+        proposal = Proposal(active_id)
+        if not proposal.response_file:
+            raise UserError(
+                'La propuesta no tiene un archivo de respuesta cargado.')
+        return {
+            'proposal': proposal.id,
+            'party': proposal.party.id if proposal.party else None,
+            'response_filename': proposal.response_filename,
+            'response_file': proposal.response_file,
+        }
 
 
 class StartProcurementRoundStart(ModelView):
