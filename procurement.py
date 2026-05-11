@@ -572,6 +572,7 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
             'from_procurement_request_report')
         processed_args = []
         for records, values in zip(actions, actions):
+            records = list(records)
             values = dict(values)
             changed = set(values.keys())
             editable_fields = {
