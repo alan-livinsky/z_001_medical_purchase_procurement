@@ -16,8 +16,10 @@ __all__ = [
     'MedicalPurchaseProcurementRound',
     'MedicalPurchaseProcurementProposal',
     'MedicalPurchaseProcurementProposalBudgetRequestReport',
+    'UploadProcurementResponseStart',
     'StartProcurementRoundStart',
     'StartProcurementRoundParty',
+    'UploadProcurementResponseWizard',
     'StartProcurementRoundWizard',
     'SelectProcurementWinnerStart',
     'SelectProcurementWinnerWizard',
@@ -509,6 +511,10 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
                 'invisible': Eval('round_state') != 'in_comparison',
                 'depends': ['round_state'],
             },
+            'load_response': {
+                'invisible': Eval('round_state') != 'in_comparison',
+                'depends': ['round_state'],
+            },
             'mark_as_winner': {
                 'invisible': Eval('round_state') != 'in_comparison',
                 'depends': ['round_state'],
@@ -629,6 +635,13 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
         'z_001_medical_purchase_procurement.report_procurement_budget_request')
     def generate_budget_request(cls, proposals):
         cls._ensure_manager_for_buttons()
+        cls.mark_request_generated(proposals)
+
+    @classmethod
+    @ModelView.button_action(
+        'z_001_medical_purchase_procurement.act_upload_procurement_response_wizard')
+    def load_response(cls, proposals):
+        cls._ensure_manager_for_buttons()
 
     @classmethod
     @ModelView.button
@@ -658,7 +671,6 @@ class MedicalPurchaseProcurementProposalBudgetRequestReport(Report):
             raise UserError(
                 'No se encontraron propuestas para generar la solicitud de '
                 'presupuesto.')
-        Proposal.mark_request_generated(proposals)
         content = cls._build_report_content(proposals)
         filename = 'solicitud_presupuesto'
         if len(proposals) == 1 and proposals[0].party:
@@ -690,6 +702,82 @@ class MedicalPurchaseProcurementProposalBudgetRequestReport(Report):
                        audit_line.purchase_quantity or 0))
             blocks.append('\n'.join(lines))
         return '\n\n'.join(blocks)
+
+
+class UploadProcurementResponseStart(ModelView):
+    'Upload Procurement Response Start'
+    __name__ = 'gnuhealth.medical.purchase.procurement.upload_response'
+
+    proposal = fields.Many2One(
+        'gnuhealth.medical.purchase.procurement.proposal', 'Propuesta',
+        readonly=True)
+    party = fields.Many2One('party.party', 'Proveedor', readonly=True)
+    response_filename = fields.Char('Nombre de Archivo', required=True)
+    response_file = fields.Binary(
+        'Archivo de Respuesta', filename='response_filename', required=True)
+
+    @classmethod
+    def default_proposal(cls):
+        active_id = Transaction().context.get('active_id')
+        if active_id:
+            return active_id
+
+    @classmethod
+    def default_party(cls):
+        Proposal = Pool().get('gnuhealth.medical.purchase.procurement.proposal')
+        active_id = Transaction().context.get('active_id')
+        if not active_id:
+            return
+        proposal = Proposal(active_id)
+        if proposal.party:
+            return proposal.party.id
+
+    @classmethod
+    def default_response_filename(cls):
+        Proposal = Pool().get('gnuhealth.medical.purchase.procurement.proposal')
+        active_id = Transaction().context.get('active_id')
+        if not active_id:
+            return
+        proposal = Proposal(active_id)
+        return proposal.response_filename
+
+
+class UploadProcurementResponseWizard(Wizard):
+    'Upload Procurement Response'
+    __name__ = 'gnuhealth.medical.purchase.procurement.upload_response_wizard'
+
+    start_state = 'start'
+    start = StateView(
+        'gnuhealth.medical.purchase.procurement.upload_response',
+        'z_001_medical_purchase_procurement.'
+        'view_upload_procurement_response_start',
+        [
+            Button('Cancelar', 'end', 'tryton-cancel'),
+            Button('Guardar', 'save_response', 'tryton-ok', default=True),
+        ])
+    save_response = StateTransition()
+
+    def transition_save_response(self):
+        Proposal = Pool().get('gnuhealth.medical.purchase.procurement.proposal')
+        Proposal._ensure_manager_for_buttons()
+        active_id = Transaction().context.get('active_id')
+        if not active_id:
+            raise UserError('No se encontro la propuesta a actualizar.')
+        if not self.start.response_file:
+            raise UserError(
+                'Debe seleccionar un archivo de respuesta del proveedor.')
+        if not self.start.response_filename:
+            raise UserError(
+                'Debe indicar el nombre del archivo de respuesta.')
+        proposal = Proposal(active_id)
+        Proposal.write([proposal], {
+            'response_filename': self.start.response_filename,
+            'response_file': self.start.response_file,
+        })
+        return 'end'
+
+    def end(self):
+        return 'reload'
 
 
 class StartProcurementRoundStart(ModelView):

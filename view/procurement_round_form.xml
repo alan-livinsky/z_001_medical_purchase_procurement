@@ -26,8 +26,8 @@
     <field name="observations" colspan="4"/>
     <field name="proposals"
            colspan="4"
-           mode="tree,form"
-           view_ids="z_001_medical_purchase_procurement.view_procurement_proposal_tree,z_001_medical_purchase_procurement.view_procurement_proposal_form"/>
+           mode="tree"
+           view_ids="z_001_medical_purchase_procurement.view_procurement_proposal_tree"/>
     <group id="actions" string="Acciones" colspan="4" col="2">
         <button name="cancel_round" string="Cancelar Ronda" icon="tryton-cancel"/>
     </group>

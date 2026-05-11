@@ -64,6 +64,12 @@
             <field name="name">generate_procurement_purchase_start</field>
         </record>
 
+        <record model="ir.ui.view" id="view_upload_procurement_response_start">
+            <field name="model">gnuhealth.medical.purchase.procurement.upload_response</field>
+            <field name="type">form</field>
+            <field name="name">upload_procurement_response_start</field>
+        </record>
+
         <record model="ir.ui.view" id="view_medical_purchase_audit_form_inherit_procurement">
             <field name="model">gnuhealth.medical.purchase.audit</field>
             <field name="inherit" ref="z_001_medical_purchases_audit.view_medical_purchase_audit_form"/>
@@ -195,6 +201,15 @@
             <field name="perm_delete" eval="False"/>
         </record>
 
+        <record model="ir.model.access" id="access_upload_procurement_response_start_manager">
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.upload_response')]"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
         <record model="ir.model.access" id="access_medical_purchase_audit_procurement_manager">
             <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.audit')]"/>
             <field name="group" ref="z_gestor_procura_medica"/>
@@ -252,6 +267,16 @@
             <field name="model">gnuhealth.medical.purchase.procurement.round,-1</field>
         </record>
 
+        <record model="ir.action.wizard" id="act_upload_procurement_response_wizard">
+            <field name="name">Cargar Respuesta</field>
+            <field name="wiz_name">gnuhealth.medical.purchase.procurement.upload_response_wizard</field>
+        </record>
+
+        <record model="ir.action-res.group" id="act_upload_procurement_response_wizard_group_manager">
+            <field name="action" ref="act_upload_procurement_response_wizard"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
         <record model="ir.action.report" id="report_procurement_budget_request">
             <field name="name">Generar Solicitud de Presupuesto</field>
             <field name="report_name">z_001_medical_purchase_procurement.procurement_budget_request</field>
@@ -278,6 +303,16 @@
 
         <record model="ir.model.button.rule" id="rule_generate_budget_request">
             <field name="button" ref="button_generate_budget_request"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
+        <record model="ir.model.button" id="button_load_response">
+            <field name="name">load_response</field>
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.proposal')]"/>
+        </record>
+
+        <record model="ir.model.button.rule" id="rule_load_response">
+            <field name="button" ref="button_load_response"/>
             <field name="group" ref="z_gestor_procura_medica"/>
         </record>
 

@@ -8,12 +8,14 @@ def register():
         procurement.MedicalPurchaseAudit,
         procurement.MedicalPurchaseProcurementRound,
         procurement.MedicalPurchaseProcurementProposal,
+        procurement.UploadProcurementResponseStart,
         procurement.StartProcurementRoundStart,
         procurement.StartProcurementRoundParty,
         procurement.SelectProcurementWinnerStart,
         procurement.GenerateProcurementPurchaseStart,
         module='z_001_medical_purchase_procurement', type_='model')
     Pool.register(
+        procurement.UploadProcurementResponseWizard,
         procurement.StartProcurementRoundWizard,
         procurement.SelectProcurementWinnerWizard,
         procurement.GenerateProcurementPurchaseWizard,

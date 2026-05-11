@@ -36,6 +36,9 @@
         <button name="generate_budget_request"
                 string="Generar Solicitud"
                 icon="tryton-print"/>
+        <button name="load_response"
+                string="Cargar Respuesta"
+                icon="tryton-open"/>
         <button name="mark_as_winner"
                 string="Marcar Ganadora"
                 icon="tryton-ok"/>
