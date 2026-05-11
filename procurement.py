@@ -454,6 +454,9 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
         'Solicitud Generada', readonly=True)
     request_generated_date = fields.DateTime(
         'Fecha Solicitud', readonly=True)
+    request_generated_date_display = fields.Function(
+        fields.Char('Fecha Solicitud'),
+        'get_datetime_display')
     request_generated_by = fields.Many2One(
         'res.user', 'Solicitud Generada Por', readonly=True)
     response_file = fields.Binary(
@@ -467,6 +470,9 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
         depends=['round_state'])
     response_received_date = fields.DateTime(
         'Fecha Respuesta', readonly=True)
+    response_received_date_display = fields.Function(
+        fields.Char('Fecha Respuesta'),
+        'get_datetime_display')
     response_received_by = fields.Many2One(
         'res.user', 'Respuesta Cargada Por', readonly=True)
     has_response_file = fields.Function(
@@ -514,6 +520,16 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
     def get_has_response_file(cls, records, name):
         return {
             record.id: bool(record.response_file)
+            for record in records
+        }
+
+    @classmethod
+    def get_datetime_display(cls, records, name):
+        field_name = name.replace('_display', '')
+        return {
+            record.id: (
+                getattr(record, field_name).strftime('%Y-%m-%d %H:%M:%S')
+                if getattr(record, field_name) else '')
             for record in records
         }
 

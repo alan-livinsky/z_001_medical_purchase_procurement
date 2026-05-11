@@ -3,9 +3,9 @@
     <field name="party"/>
     <field name="state"/>
     <field name="request_generated"/>
-    <field name="request_generated_date"/>
+    <field name="request_generated_date_display"/>
     <field name="has_response_file"/>
-    <field name="response_received_date"/>
+    <field name="response_received_date_display"/>
     <field name="is_winner"/>
     <field name="purchase"/>
 </tree>
