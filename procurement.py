@@ -504,6 +504,16 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
              Unique(table, table.round, table.party),
              'Cada proveedor solo puede tener una propuesta por ronda.'),
         ]
+        cls._buttons.update({
+            'generate_budget_request': {
+                'invisible': Eval('round_state') != 'in_comparison',
+                'depends': ['round_state'],
+            },
+            'mark_as_winner': {
+                'invisible': Eval('round_state') != 'in_comparison',
+                'depends': ['round_state'],
+            },
+        })
 
     @staticmethod
     def default_state():
@@ -613,6 +623,28 @@ class MedicalPurchaseProcurementProposal(ModelSQL, ModelView):
         if self.party:
             return self.party.rec_name
         return super().get_rec_name(name)
+
+    @classmethod
+    @ModelView.button_action(
+        'z_001_medical_purchase_procurement.report_procurement_budget_request')
+    def generate_budget_request(cls, proposals):
+        cls._ensure_manager_for_buttons()
+
+    @classmethod
+    @ModelView.button
+    def mark_as_winner(cls, proposals):
+        cls._ensure_manager_for_buttons()
+        for proposal in proposals:
+            if not proposal.round:
+                raise UserError(
+                    'La propuesta no esta vinculada a una ronda.')
+            proposal.round.__class__.select_winner(proposal.round, proposal)
+
+    @classmethod
+    def _ensure_manager_for_buttons(cls):
+        Pool().get(
+            'gnuhealth.medical.purchase.procurement.round'
+        )._ensure_procurement_manager()
 
 
 class MedicalPurchaseProcurementProposalBudgetRequestReport(Report):

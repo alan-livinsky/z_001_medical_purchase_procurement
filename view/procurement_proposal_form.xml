@@ -32,4 +32,12 @@
     </group>
     <label name="observations"/>
     <field name="observations" colspan="4"/>
+    <group id="actions" string="Acciones" colspan="4" col="2">
+        <button name="generate_budget_request"
+                string="Generar Solicitud"
+                icon="tryton-print"/>
+        <button name="mark_as_winner"
+                string="Marcar Ganadora"
+                icon="tryton-ok"/>
+    </group>
 </form>

@@ -271,6 +271,26 @@
             <field name="model">gnuhealth.medical.purchase.procurement.proposal,-1</field>
         </record>
 
+        <record model="ir.model.button" id="button_generate_budget_request">
+            <field name="name">generate_budget_request</field>
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.proposal')]"/>
+        </record>
+
+        <record model="ir.model.button.rule" id="rule_generate_budget_request">
+            <field name="button" ref="button_generate_budget_request"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
+        <record model="ir.model.button" id="button_mark_as_winner">
+            <field name="name">mark_as_winner</field>
+            <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.proposal')]"/>
+        </record>
+
+        <record model="ir.model.button.rule" id="rule_mark_as_winner">
+            <field name="button" ref="button_mark_as_winner"/>
+            <field name="group" ref="z_gestor_procura_medica"/>
+        </record>
+
         <record model="ir.model.button" id="button_cancel_procurement_round">
             <field name="name">cancel_round</field>
             <field name="model" search="[('model', '=', 'gnuhealth.medical.purchase.procurement.round')]"/>
